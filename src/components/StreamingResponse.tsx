@@ -41,6 +41,13 @@ const StreamingResponse: React.FC<StreamingResponseProps> = ({
     }
   }, [showRaw, isComplete, content, onComplete]);
 
+  const toggleRawView = () => {
+    setShowRaw(!showRaw);
+    if (isComplete) {
+      onComplete?.(content);
+    }
+  };
+
   return (
     <div className="h-full flex flex-col">
       <div className="p-4 font-mono flex-grow">
@@ -51,7 +58,7 @@ const StreamingResponse: React.FC<StreamingResponseProps> = ({
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => setShowRaw(!showRaw)}
+            onClick={toggleRawView}
             className="text-muted-foreground hover:text-foreground"
           >
             {showRaw ? (
