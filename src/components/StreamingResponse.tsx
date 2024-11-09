@@ -7,7 +7,7 @@ interface StreamingResponseProps {
 }
 
 const StreamingResponse: React.FC<StreamingResponseProps> = ({
-  content = "", // Provide default empty string
+  content = "",
   onComplete,
 }) => {
   const [displayedContent, setDisplayedContent] = useState("");
@@ -15,7 +15,7 @@ const StreamingResponse: React.FC<StreamingResponseProps> = ({
 
   useEffect(() => {
     if (!content) {
-      return; // Early return if content is undefined or empty
+      return;
     }
 
     let index = 0;
@@ -26,13 +26,15 @@ const StreamingResponse: React.FC<StreamingResponseProps> = ({
       } else {
         setIsComplete(true);
         clearInterval(interval);
+        
         // Extract code block and send it to parent
-        const codeMatch = content.match(/```(?:js|typescript)?\n([\s\S]*?)```/);
+        const codeMatch = content.match(/```(?:\w+)?\n([\s\S]*?)```/);
         if (codeMatch && onComplete) {
-          onComplete(codeMatch[1]);
+          const extractedCode = codeMatch[1].trim();
+          onComplete(extractedCode);
         }
       }
-    }, 20); // Adjust speed as needed
+    }, 20);
 
     return () => clearInterval(interval);
   }, [content, onComplete]);
@@ -44,7 +46,7 @@ const StreamingResponse: React.FC<StreamingResponseProps> = ({
         !isComplete && "animate-pulse"
       )}
     >
-      <pre className="whitespace-pre-wrap">{displayedContent}</pre>
+      <pre className="whitespace-pre-wrap">{displayedContent || " "}</pre>
     </div>
   );
 };

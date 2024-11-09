@@ -49,10 +49,10 @@ settings:
   const handleAiUpdate = () => {
     if (selectedFile) {
       setIsStreaming(true);
-      // Mock AI response for demonstration
+      // Mock AI response with proper code block formatting
+      const fileExt = selectedFile.split('.').pop();
       const mockResponse = `Here's an improved version:
-\`\`\`${selectedFile.split('.').pop()}
-// AI suggested changes for ${selectedFile}
+\`\`\`${fileExt}
 ${files[selectedFile].replace('Hello World', 'Enhanced Hello World')}
 \`\`\``;
       setAiResponses(prev => ({ ...prev, [selectedFile]: mockResponse }));
@@ -71,7 +71,10 @@ ${files[selectedFile].replace('Hello World', 'Enhanced Hello World')}
   const handleStreamComplete = (code: string) => {
     setIsStreaming(false);
     if (selectedFile) {
-      setAiResponses(prev => ({ ...prev, [selectedFile]: code }));
+      setAiResponses(prev => ({
+        ...prev,
+        [selectedFile]: code
+      }));
     }
   };
 
