@@ -5,6 +5,8 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { FileCode, MessageSquare, Merge } from "lucide-react";
 import CodePreview from "@/components/CodePreview";
 import StreamingResponse from "@/components/StreamingResponse";
+import { mergeCode } from "@/utils/mergeUtils";
+import { toast } from "sonner";
 
 const Index = () => {
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
@@ -38,7 +40,6 @@ export default function App() {
   const handleAiUpdate = () => {
     if (selectedFile) {
       setIsStreaming(true);
-      // Reset previous response
       setAiResponse(null);
     }
   };
@@ -50,8 +51,18 @@ export default function App() {
 
   const handleMerge = () => {
     if (selectedFile && aiResponse) {
-      // In a real app, you'd want to handle merging more carefully
-      console.log("Merged content:", aiResponse);
+      try {
+        const fileExtension = selectedFile.split('.').pop() || '';
+        const originalCode = sampleFiles[selectedFile as keyof typeof sampleFiles];
+        const mergedContent = mergeCode(originalCode, aiResponse, fileExtension);
+        
+        // In a real app, you'd want to update the file content here
+        console.log("Merged content:", mergedContent);
+        toast.success("Changes merged successfully!");
+      } catch (error) {
+        console.error("Error merging changes:", error);
+        toast.error("Failed to merge changes. Please try again.");
+      }
     }
   };
 
