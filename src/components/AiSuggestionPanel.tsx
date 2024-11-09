@@ -29,43 +29,59 @@ const AiSuggestionPanel: React.FC<AiSuggestionPanelProps> = ({
   onCommit,
 }) => {
   return (
-    <div className="h-full p-4 space-y-4">
-      <div className="flex justify-between items-center">
+    <div className="h-full flex flex-col p-4">
+      <div className="flex justify-between items-center mb-4">
         <h2 className="text-lg font-semibold">AI Suggestions</h2>
         {selectedFile && aiResponses[selectedFile] && (
-          <div className="flex gap-2">
-            <Button onClick={onSkip} variant="outline" className="gap-2">
-              <X className="w-4 h-4" />
+          <div className="flex items-center gap-2">
+            <Button 
+              onClick={onSkip} 
+              variant="ghost" 
+              size="sm"
+              className="text-muted-foreground hover:text-foreground"
+            >
+              <X className="w-4 h-4 mr-1" />
               Skip
             </Button>
-            <Button onClick={onMerge} variant="outline" className="gap-2">
-              <Check className="w-4 h-4" />
+            <Button 
+              onClick={onMerge} 
+              variant="outline" 
+              size="sm"
+              className="text-green-600 hover:text-green-700 border-green-200 hover:border-green-300 hover:bg-green-50"
+            >
+              <Check className="w-4 h-4 mr-1" />
               Approve
             </Button>
-            <Button onClick={onCommit} className="gap-2">
-              <GitCommit className="w-4 h-4" />
-              Commit Changes
+            <Button 
+              onClick={onCommit} 
+              size="sm"
+              className="bg-primary/90 hover:bg-primary"
+            >
+              <GitCommit className="w-4 h-4 mr-1" />
+              Commit
             </Button>
           </div>
         )}
       </div>
-      {isStreaming ? (
-        <StreamingResponse
-          content={aiResponses[selectedFile!]}
-          onComplete={onStreamComplete}
-        />
-      ) : selectedFile && aiResponses[selectedFile] ? (
-        <CodePreview
-          filename="AI Response"
-          content={aiResponses[selectedFile]}
-          originalContent={files[selectedFile]}
-          onContentChange={onAiResponseChange}
-        />
-      ) : (
-        <div className="h-full flex items-center justify-center text-muted-foreground">
-          Click "Update with AI" to see suggestions
-        </div>
-      )}
+      <div className="flex-grow overflow-hidden">
+        {isStreaming ? (
+          <StreamingResponse
+            content={aiResponses[selectedFile!]}
+            onComplete={onStreamComplete}
+          />
+        ) : selectedFile && aiResponses[selectedFile] ? (
+          <CodePreview
+            filename="AI Response"
+            content={aiResponses[selectedFile]}
+            originalContent={files[selectedFile]}
+            onContentChange={onAiResponseChange}
+          />
+        ) : (
+          <div className="h-full flex items-center justify-center text-muted-foreground">
+            Click "Update with AI" to see suggestions
+          </div>
+        )}
+      </div>
     </div>
   );
 };

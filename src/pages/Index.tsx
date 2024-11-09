@@ -8,6 +8,7 @@ import { mergeCode } from "@/utils/mergeUtils";
 import FileExplorer from "@/components/FileExplorer";
 import EditorPanel from "@/components/EditorPanel";
 import AiSuggestionPanel from "@/components/AiSuggestionPanel";
+import ChatInterface from "@/components/ChatInterface";
 
 const Index = () => {
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
@@ -87,7 +88,15 @@ ${files[selectedFile].replace('Hello World', 'Enhanced Hello World')}
           ...prev,
           [selectedFile]: mergedContent
         }));
-        toast.success("Changes approved! Ready to commit.");
+
+        // Clear AI response after successful merge
+        setAiResponses(prev => {
+          const newResponses = { ...prev };
+          delete newResponses[selectedFile];
+          return newResponses;
+        });
+
+        toast.success("Changes approved and merged!");
       } catch (error) {
         console.error("Error merging changes:", error);
         toast.error("Failed to merge changes. Please try again.");
@@ -113,7 +122,7 @@ ${files[selectedFile].replace('Hello World', 'Enhanced Hello World')}
   return (
     <div className="h-screen bg-background">
       <ResizablePanelGroup direction="horizontal">
-        <ResizablePanel defaultSize={20}>
+        <ResizablePanel defaultSize={15} minSize={15}>
           <FileExplorer
             files={files}
             selectedFile={selectedFile}
@@ -121,7 +130,7 @@ ${files[selectedFile].replace('Hello World', 'Enhanced Hello World')}
           />
         </ResizablePanel>
 
-        <ResizablePanel defaultSize={40}>
+        <ResizablePanel defaultSize={45} minSize={30}>
           <EditorPanel
             selectedFile={selectedFile}
             files={files}
@@ -130,7 +139,7 @@ ${files[selectedFile].replace('Hello World', 'Enhanced Hello World')}
           />
         </ResizablePanel>
 
-        <ResizablePanel defaultSize={40}>
+        <ResizablePanel defaultSize={40} minSize={30}>
           <AiSuggestionPanel
             selectedFile={selectedFile}
             files={files}
@@ -150,20 +159,13 @@ ${files[selectedFile].replace('Hello World', 'Enhanced Hello World')}
           <Button
             variant="outline"
             size="icon"
-            className="fixed bottom-4 right-4 rounded-full h-12 w-12"
+            className="fixed bottom-4 right-4 rounded-full h-12 w-12 shadow-lg"
           >
             <MessageSquare className="h-6 w-6" />
           </Button>
         </SheetTrigger>
         <SheetContent side="right" className="w-[400px] sm:w-[540px]">
-          <div className="h-full flex flex-col">
-            <h2 className="text-lg font-semibold mb-4">Chat with AI</h2>
-            <div className="flex-grow bg-accent/20 rounded-lg p-4">
-              <div className="text-muted-foreground text-center">
-                No messages yet
-              </div>
-            </div>
-          </div>
+          <ChatInterface />
         </SheetContent>
       </Sheet>
     </div>
