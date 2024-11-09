@@ -9,11 +9,13 @@ import FileExplorer from "@/components/FileExplorer";
 import EditorPanel from "@/components/EditorPanel";
 import AiSuggestionPanel from "@/components/AiSuggestionPanel";
 import ChatInterface from "@/components/ChatInterface";
+import StreamingResponse from "@/components/StreamingResponse";
 
 const Index = () => {
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
   const [aiResponses, setAiResponses] = useState<Record<string, string>>({});
   const [isStreaming, setIsStreaming] = useState(false);
+  const [streamingContent, setStreamingContent] = useState<string>("");
   const [aiUpdatedFiles, setAiUpdatedFiles] = useState<Set<string>>(new Set());
   const [files, setFiles] = useState({
     "src/App.tsx": `import React from 'react';
@@ -36,6 +38,7 @@ settings:
   const handleFileSelect = (filename: string) => {
     setSelectedFile(filename);
     setIsStreaming(false);
+    setStreamingContent("");
   };
 
   const handleFileContentChange = (newContent: string) => {
@@ -50,30 +53,15 @@ settings:
   const handleAiUpdate = () => {
     if (selectedFile) {
       setIsStreaming(true);
+      setStreamingContent("");
       
-      // Mock streaming response that properly shows code changes
+      // Mock streaming response
       const mockResponse = files[selectedFile].replace(
         'port: 3000',
         'port: 3003'
       );
       
-      // Simulate streaming delay
-      setTimeout(() => {
-        setAiResponses(prev => ({ 
-          ...prev, 
-          [selectedFile]: mockResponse 
-        }));
-        setIsStreaming(false);
-      }, 1000);
-    }
-  };
-
-  const handleAiResponseChange = (newContent: string) => {
-    if (selectedFile) {
-      setAiResponses(prev => ({
-        ...prev,
-        [selectedFile]: newContent
-      }));
+      setStreamingContent(mockResponse);
     }
   };
 
@@ -85,6 +73,15 @@ settings:
         [selectedFile]: code
       }));
       setAiUpdatedFiles(prev => new Set(prev).add(selectedFile));
+    }
+  };
+
+  const handleAiResponseChange = (newContent: string) => {
+    if (selectedFile) {
+      setAiResponses(prev => ({
+        ...prev,
+        [selectedFile]: newContent
+      }));
     }
   };
 
@@ -155,17 +152,25 @@ settings:
         </ResizablePanel>
 
         <ResizablePanel defaultSize={40} minSize={30}>
-          <AiSuggestionPanel
-            selectedFile={selectedFile}
-            files={files}
-            aiResponses={aiResponses}
-            isStreaming={isStreaming}
-            onAiResponseChange={handleAiResponseChange}
-            onStreamComplete={handleStreamComplete}
-            onMerge={handleMerge}
-            onSkip={handleSkip}
-            onCommit={handleCommit}
-          />
+          {isStreaming && selectedFile ? (
+            <StreamingResponse
+              content={streamingContent}
+              filename={selectedFile}
+              onComplete={handleStreamComplete}
+            />
+          ) : (
+            <AiSuggestionPanel
+              selectedFile={selectedFile}
+              files={files}
+              aiResponses={aiResponses}
+              isStreaming={isStreaming}
+              onAiResponseChange={handleAiResponseChange}
+              onStreamComplete={handleStreamComplete}
+              onMerge={handleMerge}
+              onSkip={handleSkip}
+              onCommit={handleCommit}
+            />
+          )}
         </ResizablePanel>
       </ResizablePanelGroup>
 
