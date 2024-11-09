@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { Button } from "./ui/button";
-import { cn } from "@/lib/utils";
 
 interface StreamingResponseProps {
   content: string;
@@ -43,29 +42,32 @@ const StreamingResponse: React.FC<StreamingResponseProps> = ({
   }, [showRaw, isComplete, content, onComplete]);
 
   return (
-    <div className="p-4 font-mono">
-      <div className="mb-2 flex justify-between items-center">
-        <div className="text-sm text-muted-foreground">
-          Here is the suggested code for {filename}:
+    <div className="h-full flex flex-col">
+      <div className="p-4 font-mono flex-grow">
+        <div className="mb-2 flex justify-between items-center">
+          <div className="text-sm text-muted-foreground">
+            Here is the suggested code for {filename}:
+          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setShowRaw(!showRaw)}
+            className="text-muted-foreground hover:text-foreground"
+          >
+            {showRaw ? (
+              <EyeOff className="h-4 w-4 mr-2" />
+            ) : (
+              <Eye className="h-4 w-4 mr-2" />
+            )}
+            {showRaw ? "Hide Raw" : "Show Raw"}
+          </Button>
         </div>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => setShowRaw(!showRaw)}
-          className="text-muted-foreground"
-        >
-          {showRaw ? (
-            <EyeOff className="h-4 w-4" />
-          ) : (
-            <Eye className="h-4 w-4" />
-          )}
-        </Button>
+        <pre className="p-4 bg-muted rounded-lg overflow-x-auto h-full">
+          <code className="text-sm whitespace-pre-wrap">
+            {showRaw ? content : displayContent}
+          </code>
+        </pre>
       </div>
-      <pre className="p-4 bg-muted rounded-lg overflow-x-auto">
-        <code className="text-sm">
-          {showRaw ? content : displayContent}
-        </code>
-      </pre>
     </div>
   );
 };
