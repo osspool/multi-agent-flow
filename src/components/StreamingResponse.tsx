@@ -7,13 +7,17 @@ interface StreamingResponseProps {
 }
 
 const StreamingResponse: React.FC<StreamingResponseProps> = ({
-  content,
+  content = "", // Provide default empty string
   onComplete,
 }) => {
   const [displayedContent, setDisplayedContent] = useState("");
   const [isComplete, setIsComplete] = useState(false);
 
   useEffect(() => {
+    if (!content) {
+      return; // Early return if content is undefined or empty
+    }
+
     let index = 0;
     const interval = setInterval(() => {
       if (index < content.length) {
