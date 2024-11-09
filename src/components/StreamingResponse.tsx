@@ -27,17 +27,12 @@ const StreamingResponse: React.FC<StreamingResponseProps> = ({
       } else {
         clearInterval(interval);
         setIsComplete(true);
+        onComplete?.(content);
       }
     }, 20);
 
     return () => clearInterval(interval);
-  }, [content]);
-
-  const handleComplete = () => {
-    if (onComplete) {
-      onComplete(content);
-    }
-  };
+  }, [content, onComplete]);
 
   return (
     <div className="p-4 font-mono">
@@ -45,25 +40,18 @@ const StreamingResponse: React.FC<StreamingResponseProps> = ({
         <div className="text-sm text-muted-foreground">
           Here is the suggested code for {filename}:
         </div>
-        <div className="flex gap-2">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setShowRaw(!showRaw)}
-            className="text-muted-foreground"
-          >
-            {showRaw ? (
-              <EyeOff className="h-4 w-4" />
-            ) : (
-              <Eye className="h-4 w-4" />
-            )}
-          </Button>
-          {isComplete && (
-            <Button size="sm" onClick={handleComplete}>
-              Apply Changes
-            </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => setShowRaw(!showRaw)}
+          className="text-muted-foreground"
+        >
+          {showRaw ? (
+            <EyeOff className="h-4 w-4" />
+          ) : (
+            <Eye className="h-4 w-4" />
           )}
-        </div>
+        </Button>
       </div>
       <pre className="p-4 bg-muted rounded-lg overflow-x-auto">
         <code className="text-sm">
