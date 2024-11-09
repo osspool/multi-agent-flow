@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { ResizablePanelGroup, ResizablePanel } from "@/components/ui/resizable";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { FileCode, MessageSquare, Merge } from "lucide-react";
+import { FileCode, MessageSquare, Merge, Check, X, GitCommit } from "lucide-react";
 import CodePreview from "@/components/CodePreview";
 import StreamingResponse from "@/components/StreamingResponse";
 import { mergeCode } from "@/utils/mergeUtils";
@@ -54,6 +54,24 @@ export default function App() {
     }
   };
 
+  const handleFileContentChange = (newContent: string) => {
+    if (selectedFile) {
+      setFiles(prev => ({
+        ...prev,
+        [selectedFile]: newContent
+      }));
+    }
+  };
+
+  const handleAiResponseChange = (newContent: string) => {
+    if (selectedFile) {
+      setAiResponses(prev => ({
+        ...prev,
+        [selectedFile]: newContent
+      }));
+    }
+  };
+
   const handleMerge = () => {
     if (selectedFile && aiResponses[selectedFile]) {
       try {
@@ -61,12 +79,11 @@ export default function App() {
         const originalCode = files[selectedFile as keyof typeof files];
         const mergedContent = mergeCode(originalCode, aiResponses[selectedFile], fileExtension);
         
-        // Update the file content
         setFiles(prev => ({
           ...prev,
           [selectedFile]: mergedContent
         }));
-        toast.success("Changes merged successfully!");
+        toast.success("Changes approved! Ready to commit.");
       } catch (error) {
         console.error("Error merging changes:", error);
         toast.error("Failed to merge changes. Please try again.");
@@ -74,10 +91,24 @@ export default function App() {
     }
   };
 
+  const handleCommit = () => {
+    toast.success("Changes committed successfully! (Mock)");
+  };
+
+  const handleSkip = () => {
+    if (selectedFile) {
+      setAiResponses(prev => {
+        const newResponses = { ...prev };
+        delete newResponses[selectedFile];
+        return newResponses;
+      });
+      toast.info("Changes skipped");
+    }
+  };
+
   return (
     <div className="h-screen bg-background">
       <ResizablePanelGroup direction="horizontal">
-        {/* File Selection Panel */}
         <ResizablePanel defaultSize={20}>
           <div className="h-full border-r p-4 space-y-4">
             <h2 className="text-lg font-semibold mb-4">Files</h2>
@@ -98,7 +129,6 @@ export default function App() {
           </div>
         </ResizablePanel>
 
-        {/* Code Editor Panel */}
         <ResizablePanel defaultSize={40}>
           <div className="h-full p-4 space-y-4">
             {selectedFile ? (
@@ -112,6 +142,7 @@ export default function App() {
                 <CodePreview
                   filename={selectedFile}
                   content={files[selectedFile as keyof typeof files]}
+                  onContentChange={handleFileContentChange}
                 />
               </>
             ) : (
@@ -122,16 +153,25 @@ export default function App() {
           </div>
         </ResizablePanel>
 
-        {/* AI Response Panel */}
         <ResizablePanel defaultSize={40}>
           <div className="h-full p-4 space-y-4">
             <div className="flex justify-between items-center">
               <h2 className="text-lg font-semibold">AI Suggestions</h2>
               {selectedFile && aiResponses[selectedFile] && (
-                <Button onClick={handleMerge} className="gap-2">
-                  <Merge className="w-4 h-4" />
-                  Merge Changes
-                </Button>
+                <div className="flex gap-2">
+                  <Button onClick={handleSkip} variant="outline" className="gap-2">
+                    <X className="w-4 h-4" />
+                    Skip
+                  </Button>
+                  <Button onClick={handleMerge} variant="outline" className="gap-2">
+                    <Check className="w-4 h-4" />
+                    Approve
+                  </Button>
+                  <Button onClick={handleCommit} className="gap-2">
+                    <GitCommit className="w-4 h-4" />
+                    Commit Changes
+                  </Button>
+                </div>
               )}
             </div>
             {isStreaming ? (
@@ -143,6 +183,8 @@ export default function App() {
               <CodePreview
                 filename="AI Response"
                 content={aiResponses[selectedFile]}
+                originalContent={files[selectedFile]}
+                onContentChange={handleAiResponseChange}
               />
             ) : (
               <div className="h-full flex items-center justify-center text-muted-foreground">
@@ -153,7 +195,6 @@ export default function App() {
         </ResizablePanel>
       </ResizablePanelGroup>
 
-      {/* Chat Sheet */}
       <Sheet>
         <SheetTrigger asChild>
           <Button
