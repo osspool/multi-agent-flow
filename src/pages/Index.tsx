@@ -50,10 +50,21 @@ settings:
   const handleAiUpdate = () => {
     if (selectedFile) {
       setIsStreaming(true);
-      // Simplified mock response with just the enhanced code
-      const enhancedCode = files[selectedFile].replace('Hello World', 'Enhanced Hello World with Better Practices');
-      setAiResponses(prev => ({ ...prev, [selectedFile]: enhancedCode }));
-      setIsStreaming(false);
+      
+      // Mock streaming response that properly shows code changes
+      const mockResponse = files[selectedFile].replace(
+        'port: 3000',
+        'port: 3003'
+      );
+      
+      // Simulate streaming delay
+      setTimeout(() => {
+        setAiResponses(prev => ({ 
+          ...prev, 
+          [selectedFile]: mockResponse 
+        }));
+        setIsStreaming(false);
+      }, 1000);
     }
   };
 

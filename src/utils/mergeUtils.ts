@@ -171,6 +171,69 @@ const parseCode = (code: string, fileType: string): CodeBlock[] => {
 
 export const mergeCode = (originalCode: string, aiChanges: string, filename: string): string => {
   const fileType = getFileType(filename);
+  
+  // Special handling for YAML files
+  if (fileType === 'yml' || fileType === 'yaml') {
+    const originalLines = originalCode.split('\n');
+    const aiLines = aiChanges.split('\n');
+    const result: string[] = [];
+    const processedKeys = new Set<string>();
+
+    // Create a map of key paths to values from AI changes
+    const aiChangesMap = new Map<string, string>();
+    let currentPath: string[] = [];
+    
+    aiLines.forEach(line => {
+      const indentation = line.match(/^\s*/)?.[0].length || 0;
+      const trimmedLine = line.trim();
+      
+      if (trimmedLine && !trimmedLine.endsWith(':')) {
+        const [key, value] = trimmedLine.split(':').map(s => s.trim());
+        const fullPath = [...currentPath, key].join('.');
+        aiChangesMap.set(fullPath, value);
+      } else if (trimmedLine) {
+        const key = trimmedLine.replace(':', '');
+        if (indentation === 0) {
+          currentPath = [key];
+        } else {
+          currentPath.push(key);
+        }
+      }
+    });
+
+    // Process original lines and replace values
+    currentPath = [];
+    originalLines.forEach(line => {
+      const indentation = line.match(/^\s*/)?.[0].length || 0;
+      const trimmedLine = line.trim();
+      
+      if (trimmedLine && !trimmedLine.endsWith(':')) {
+        const [key, value] = trimmedLine.split(':').map(s => s.trim());
+        const fullPath = [...currentPath, key].join('.');
+        
+        if (aiChangesMap.has(fullPath)) {
+          result.push(`${' '.repeat(indentation)}${key}: ${aiChangesMap.get(fullPath)}`);
+          processedKeys.add(fullPath);
+        } else {
+          result.push(line);
+        }
+      } else if (trimmedLine) {
+        const key = trimmedLine.replace(':', '');
+        if (indentation === 0) {
+          currentPath = [key];
+        } else {
+          currentPath.push(key);
+        }
+        result.push(line);
+      } else {
+        result.push(line);
+      }
+    });
+
+    return result.join('\n');
+  }
+
+  // Handle other file types
   const originalBlocks = parseCode(originalCode, fileType);
   const aiBlocks = parseCode(aiChanges, fileType);
   let mergedCode = originalCode;
