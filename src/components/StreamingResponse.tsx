@@ -43,9 +43,9 @@ const StreamingResponse: React.FC<StreamingResponseProps> = ({
   const codeContent = extractCodeFromMarkdown(displayedContent, getFileType(filename));
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 p-4">
       {aiMessage && (
-        <div className="prose dark:prose-invert max-w-none">
+        <div className="prose dark:prose-invert max-w-none rounded-lg bg-muted/50 p-4">
           {aiMessage}
         </div>
       )}
@@ -56,7 +56,7 @@ const StreamingResponse: React.FC<StreamingResponseProps> = ({
             !isComplete && "animate-pulse"
           )}
         >
-          <pre className="whitespace-pre-wrap">{codeContent || " "}</pre>
+          <pre className="whitespace-pre-wrap overflow-auto">{codeContent}</pre>
         </div>
       )}
     </div>

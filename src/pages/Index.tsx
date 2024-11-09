@@ -53,9 +53,11 @@ settings:
     if (selectedFile) {
       setIsStreaming(true);
       const fileExt = selectedFile.split('.').pop();
-      const mockResponse = `Here's an improved version:
+      // Create a properly formatted mock response with message and code block
+      const mockResponse = `I've enhanced the code with better practices:
+
 \`\`\`${fileExt}
-${files[selectedFile].replace('Hello World', 'Enhanced Hello World')}
+${files[selectedFile].replace('Hello World', 'Enhanced Hello World with Better Practices')}
 \`\`\``;
       setAiResponses(prev => ({ ...prev, [selectedFile]: mockResponse }));
     }
