@@ -2,70 +2,216 @@ interface CodeBlock {
   type: 'function' | 'class' | 'variable' | 'other';
   name: string;
   content: string;
+  indentation: number;
 }
 
-const extractFunctionName = (code: string): string | null => {
-  const functionMatch = code.match(/(?:function|const)\s+(\w+)/);
-  return functionMatch ? functionMatch[1] : null;
+const getFileType = (filename: string): string => {
+  return filename.split('.').pop()?.toLowerCase() || '';
 };
 
-const parseCode = (code: string): CodeBlock[] => {
-  // Split code into blocks (functions, classes, etc.)
+const getIndentation = (line: string): number => {
+  const match = line.match(/^(\s*)/);
+  return match ? match[1].length : 0;
+};
+
+const parseYaml = (content: string): CodeBlock[] => {
+  const lines = content.split('\n');
   const blocks: CodeBlock[] = [];
-  const lines = code.split('\n');
+  let currentBlock = '';
+  let currentIndentation = 0;
+
+  lines.forEach((line) => {
+    const indentation = getIndentation(line);
+    if (indentation <= currentIndentation && currentBlock) {
+      blocks.push({
+        type: 'other',
+        name: currentBlock.split('\n')[0].trim(),
+        content: currentBlock.trim(),
+        indentation: currentIndentation,
+      });
+      currentBlock = '';
+    }
+    currentBlock += line + '\n';
+    currentIndentation = indentation;
+  });
+
+  if (currentBlock) {
+    blocks.push({
+      type: 'other',
+      name: currentBlock.split('\n')[0].trim(),
+      content: currentBlock.trim(),
+      indentation: currentIndentation,
+    });
+  }
+
+  return blocks;
+};
+
+const parsePython = (content: string): CodeBlock[] => {
+  const lines = content.split('\n');
+  const blocks: CodeBlock[] = [];
   let currentBlock = '';
   let currentType: CodeBlock['type'] = 'other';
   let currentName = '';
+  let currentIndentation = 0;
 
   lines.forEach((line) => {
-    if (line.includes('function') || line.includes('const') && line.includes('=>')) {
+    if (line.trim().startsWith('def ') || line.trim().startsWith('class ')) {
       if (currentBlock) {
-        blocks.push({ type: currentType, name: currentName, content: currentBlock.trim() });
+        blocks.push({
+          type: currentType,
+          name: currentName,
+          content: currentBlock.trim(),
+          indentation: currentIndentation,
+        });
       }
       currentBlock = line;
-      currentType = 'function';
-      currentName = extractFunctionName(line) || '';
+      currentType = line.trim().startsWith('def ') ? 'function' : 'class';
+      currentName = line.trim().split(' ')[1].split('(')[0];
+      currentIndentation = getIndentation(line);
     } else {
       currentBlock += '\n' + line;
     }
   });
 
   if (currentBlock) {
-    blocks.push({ type: currentType, name: currentName, content: currentBlock.trim() });
+    blocks.push({
+      type: currentType,
+      name: currentName,
+      content: currentBlock.trim(),
+      indentation: currentIndentation,
+    });
   }
 
   return blocks;
 };
 
-export const mergeCode = (originalCode: string, aiChanges: string, fileType: string): string => {
-  const originalBlocks = parseCode(originalCode);
-  const aiBlocks = parseCode(aiChanges);
+const parseJson = (content: string): CodeBlock[] => {
+  try {
+    const parsed = JSON.parse(content);
+    return Object.entries(parsed).map(([key, value]) => ({
+      type: 'other',
+      name: key,
+      content: JSON.stringify({ [key]: value }, null, 2),
+      indentation: 0,
+    }));
+  } catch {
+    return [{
+      type: 'other',
+      name: 'root',
+      content: content,
+      indentation: 0,
+    }];
+  }
+};
+
+const parseJavaScript = (content: string): CodeBlock[] => {
+  const blocks: CodeBlock[] = [];
+  const lines = content.split('\n');
+  let currentBlock = '';
+  let currentType: CodeBlock['type'] = 'other';
+  let currentName = '';
+  let currentIndentation = 0;
+
+  lines.forEach((line) => {
+    if (line.includes('function') || (line.includes('const') && line.includes('=>'))) {
+      if (currentBlock) {
+        blocks.push({
+          type: currentType,
+          name: currentName,
+          content: currentBlock.trim(),
+          indentation: currentIndentation,
+        });
+      }
+      currentBlock = line;
+      currentType = 'function';
+      const functionMatch = line.match(/(?:function|const)\s+(\w+)/);
+      currentName = functionMatch ? functionMatch[1] : '';
+      currentIndentation = getIndentation(line);
+    } else {
+      currentBlock += '\n' + line;
+    }
+  });
+
+  if (currentBlock) {
+    blocks.push({
+      type: currentType,
+      name: currentName,
+      content: currentBlock.trim(),
+      indentation: currentIndentation,
+    });
+  }
+
+  return blocks;
+};
+
+const parseCode = (code: string, fileType: string): CodeBlock[] => {
+  switch (fileType) {
+    case 'yml':
+    case 'yaml':
+      return parseYaml(code);
+    case 'py':
+      return parsePython(code);
+    case 'json':
+      return parseJson(code);
+    case 'js':
+    case 'jsx':
+    case 'ts':
+    case 'tsx':
+      return parseJavaScript(code);
+    default:
+      return [{
+        type: 'other',
+        name: 'root',
+        content: code,
+        indentation: 0,
+      }];
+  }
+};
+
+export const mergeCode = (originalCode: string, aiChanges: string, filename: string): string => {
+  const fileType = getFileType(filename);
+  const originalBlocks = parseCode(originalCode, fileType);
+  const aiBlocks = parseCode(aiChanges, fileType);
   let mergedCode = originalCode;
 
   aiBlocks.forEach((aiBlock) => {
-    if (aiBlock.type === 'function') {
-      const existingBlock = originalBlocks.find(
-        (block) => block.type === 'function' && block.name === aiBlock.name
-      );
+    const existingBlock = originalBlocks.find(
+      (block) => block.type === aiBlock.type && block.name === aiBlock.name
+    );
 
-      if (existingBlock) {
-        // Update existing function
-        mergedCode = mergedCode.replace(existingBlock.content, aiBlock.content);
+    if (existingBlock) {
+      // Update existing block while preserving indentation
+      const indentedContent = aiBlock.content.split('\n')
+        .map((line, i) => i === 0 ? line : ' '.repeat(existingBlock.indentation) + line)
+        .join('\n');
+      mergedCode = mergedCode.replace(existingBlock.content, indentedContent);
+    } else {
+      // Append new block
+      const indentedContent = aiBlock.content.split('\n')
+        .map((line, i) => i === 0 ? line : ' '.repeat(aiBlock.indentation) + line)
+        .join('\n');
+
+      if (fileType === 'yml' || fileType === 'yaml') {
+        mergedCode += '\n' + indentedContent;
+      } else if (fileType === 'json') {
+        // For JSON, we need to parse and stringify to maintain valid JSON
+        try {
+          const originalJson = JSON.parse(mergedCode);
+          const aiJson = JSON.parse(aiBlock.content);
+          const merged = { ...originalJson, ...aiJson };
+          mergedCode = JSON.stringify(merged, null, 2);
+        } catch {
+          mergedCode += '\n' + indentedContent;
+        }
       } else {
-        // Append new function
-        if (fileType === 'ts' || fileType === 'js' || fileType === 'tsx') {
-          // For JS/TS files, append before the last export statement
-          const lastExportIndex = mergedCode.lastIndexOf('export');
-          if (lastExportIndex !== -1) {
-            mergedCode = mergedCode.slice(0, lastExportIndex) + 
-                        '\n\n' + aiBlock.content + '\n\n' + 
-                        mergedCode.slice(lastExportIndex);
-          } else {
-            mergedCode += '\n\n' + aiBlock.content;
-          }
+        const lastExportIndex = mergedCode.lastIndexOf('export');
+        if (lastExportIndex !== -1 && (fileType === 'ts' || fileType === 'js' || fileType === 'tsx' || fileType === 'jsx')) {
+          mergedCode = mergedCode.slice(0, lastExportIndex) + 
+                      '\n\n' + indentedContent + '\n\n' + 
+                      mergedCode.slice(lastExportIndex);
         } else {
-          // For other file types, simply append at the end
-          mergedCode += '\n\n' + aiBlock.content;
+          mergedCode += '\n\n' + indentedContent;
         }
       }
     }
