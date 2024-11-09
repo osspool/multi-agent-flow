@@ -10,11 +10,9 @@ import { toast } from "sonner";
 
 const Index = () => {
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
-  const [aiResponse, setAiResponse] = useState<string | null>(null);
+  const [aiResponses, setAiResponses] = useState<Record<string, string>>({});
   const [isStreaming, setIsStreaming] = useState(false);
-
-  // Sample files (in real app, these would come from the first AI)
-  const sampleFiles = {
+  const [files, setFiles] = useState({
     "src/App.tsx": `import React from 'react';
 export default function App() {
   return <div>Hello World</div>;
@@ -22,7 +20,7 @@ export default function App() {
     "src/utils.ts": `export function add(a: number, b: number) {
   return a + b;
 }`
-  };
+  });
 
   const mockAiResponse = `Your code:
 \`\`\`js
@@ -37,27 +35,37 @@ export default function App() {
 }
 \`\`\``;
 
+  const handleFileSelect = (filename: string) => {
+    setSelectedFile(filename);
+    setIsStreaming(false);
+  };
+
   const handleAiUpdate = () => {
     if (selectedFile) {
       setIsStreaming(true);
-      setAiResponse(null);
+      setAiResponses(prev => ({ ...prev, [selectedFile]: '' }));
     }
   };
 
   const handleStreamComplete = (code: string) => {
     setIsStreaming(false);
-    setAiResponse(code);
+    if (selectedFile) {
+      setAiResponses(prev => ({ ...prev, [selectedFile]: code }));
+    }
   };
 
   const handleMerge = () => {
-    if (selectedFile && aiResponse) {
+    if (selectedFile && aiResponses[selectedFile]) {
       try {
         const fileExtension = selectedFile.split('.').pop() || '';
-        const originalCode = sampleFiles[selectedFile as keyof typeof sampleFiles];
-        const mergedContent = mergeCode(originalCode, aiResponse, fileExtension);
+        const originalCode = files[selectedFile as keyof typeof files];
+        const mergedContent = mergeCode(originalCode, aiResponses[selectedFile], fileExtension);
         
-        // In a real app, you'd want to update the file content here
-        console.log("Merged content:", mergedContent);
+        // Update the file content
+        setFiles(prev => ({
+          ...prev,
+          [selectedFile]: mergedContent
+        }));
         toast.success("Changes merged successfully!");
       } catch (error) {
         console.error("Error merging changes:", error);
@@ -73,7 +81,7 @@ export default function App() {
         <ResizablePanel defaultSize={20}>
           <div className="h-full border-r p-4 space-y-4">
             <h2 className="text-lg font-semibold mb-4">Files</h2>
-            {Object.entries(sampleFiles).map(([filename]) => (
+            {Object.entries(files).map(([filename]) => (
               <div
                 key={filename}
                 className={`p-2 rounded cursor-pointer flex items-center gap-2 ${
@@ -81,7 +89,7 @@ export default function App() {
                     ? "bg-accent"
                     : "hover:bg-accent/50"
                 }`}
-                onClick={() => setSelectedFile(filename)}
+                onClick={() => handleFileSelect(filename)}
               >
                 <FileCode className="w-4 h-4" />
                 <span className="text-sm">{filename}</span>
@@ -103,7 +111,7 @@ export default function App() {
                 </div>
                 <CodePreview
                   filename={selectedFile}
-                  content={sampleFiles[selectedFile as keyof typeof sampleFiles]}
+                  content={files[selectedFile as keyof typeof files]}
                 />
               </>
             ) : (
@@ -119,7 +127,7 @@ export default function App() {
           <div className="h-full p-4 space-y-4">
             <div className="flex justify-between items-center">
               <h2 className="text-lg font-semibold">AI Suggestions</h2>
-              {aiResponse && (
+              {selectedFile && aiResponses[selectedFile] && (
                 <Button onClick={handleMerge} className="gap-2">
                   <Merge className="w-4 h-4" />
                   Merge Changes
@@ -131,10 +139,10 @@ export default function App() {
                 content={mockAiResponse} 
                 onComplete={handleStreamComplete}
               />
-            ) : aiResponse ? (
+            ) : selectedFile && aiResponses[selectedFile] ? (
               <CodePreview
                 filename="AI Response"
-                content={aiResponse}
+                content={aiResponses[selectedFile]}
               />
             ) : (
               <div className="h-full flex items-center justify-center text-muted-foreground">
