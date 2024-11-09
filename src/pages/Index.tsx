@@ -4,10 +4,12 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { FileCode, MessageSquare, Merge } from "lucide-react";
 import CodePreview from "@/components/CodePreview";
+import StreamingResponse from "@/components/StreamingResponse";
 
 const Index = () => {
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
   const [aiResponse, setAiResponse] = useState<string | null>(null);
+  const [isStreaming, setIsStreaming] = useState(false);
 
   // Sample files (in real app, these would come from the first AI)
   const sampleFiles = {
@@ -20,10 +22,9 @@ export default function App() {
 }`
   };
 
-  const handleAiUpdate = () => {
-    if (selectedFile) {
-      // Simulate AI response
-      setAiResponse(`// AI suggested changes for ${selectedFile}
+  const mockAiResponse = `Your code:
+\`\`\`js
+// AI suggested changes for ${selectedFile}
 import React from 'react';
 export default function App() {
   return (
@@ -31,15 +32,26 @@ export default function App() {
       <h1>Enhanced Hello World</h1>
     </div>
   );
-}`);
+}
+\`\`\``;
+
+  const handleAiUpdate = () => {
+    if (selectedFile) {
+      setIsStreaming(true);
+      // Reset previous response
+      setAiResponse(null);
     }
+  };
+
+  const handleStreamComplete = (code: string) => {
+    setIsStreaming(false);
+    setAiResponse(code);
   };
 
   const handleMerge = () => {
     if (selectedFile && aiResponse) {
       // In a real app, you'd want to handle merging more carefully
-      const mergedContent = aiResponse;
-      console.log("Merged content:", mergedContent);
+      console.log("Merged content:", aiResponse);
     }
   };
 
@@ -103,7 +115,12 @@ export default function App() {
                 </Button>
               )}
             </div>
-            {aiResponse ? (
+            {isStreaming ? (
+              <StreamingResponse 
+                content={mockAiResponse} 
+                onComplete={handleStreamComplete}
+              />
+            ) : aiResponse ? (
               <CodePreview
                 filename="AI Response"
                 content={aiResponse}
@@ -132,7 +149,6 @@ export default function App() {
           <div className="h-full flex flex-col">
             <h2 className="text-lg font-semibold mb-4">Chat with AI</h2>
             <div className="flex-grow bg-accent/20 rounded-lg p-4">
-              {/* Chat messages would go here */}
               <div className="text-muted-foreground text-center">
                 No messages yet
               </div>
