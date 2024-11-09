@@ -27,12 +27,20 @@ const StreamingResponse: React.FC<StreamingResponseProps> = ({
       } else {
         clearInterval(interval);
         setIsComplete(true);
-        onComplete?.(content);
+        if (!showRaw) {
+          onComplete?.(content);
+        }
       }
     }, 20);
 
     return () => clearInterval(interval);
-  }, [content, onComplete]);
+  }, [content, onComplete, showRaw]);
+
+  useEffect(() => {
+    if (isComplete && !showRaw) {
+      onComplete?.(content);
+    }
+  }, [showRaw, isComplete, content, onComplete]);
 
   return (
     <div className="p-4 font-mono">
