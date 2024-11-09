@@ -5,15 +5,18 @@ import { MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { mergeCode } from "@/utils/mergeUtils";
+import { getFileType } from "@/utils/fileTypeUtils";
 import FileExplorer from "@/components/FileExplorer";
 import EditorPanel from "@/components/EditorPanel";
 import AiSuggestionPanel from "@/components/AiSuggestionPanel";
 import ChatInterface from "@/components/ChatInterface";
+import StreamingResponse from "@/components/StreamingResponse";
 
 const Index = () => {
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
   const [aiResponses, setAiResponses] = useState<Record<string, string>>({});
   const [isStreaming, setIsStreaming] = useState(false);
+  const [aiUpdatedFiles, setAiUpdatedFiles] = useState<Set<string>>(new Set());
   const [files, setFiles] = useState({
     "src/App.tsx": `import React from 'react';
 export default function App() {
@@ -49,7 +52,6 @@ settings:
   const handleAiUpdate = () => {
     if (selectedFile) {
       setIsStreaming(true);
-      // Mock AI response with proper code block formatting
       const fileExt = selectedFile.split('.').pop();
       const mockResponse = `Here's an improved version:
 \`\`\`${fileExt}
@@ -75,6 +77,7 @@ ${files[selectedFile].replace('Hello World', 'Enhanced Hello World')}
         ...prev,
         [selectedFile]: code
       }));
+      setAiUpdatedFiles(prev => new Set(prev).add(selectedFile));
     }
   };
 
@@ -92,7 +95,8 @@ ${files[selectedFile].replace('Hello World', 'Enhanced Hello World')}
           [selectedFile]: mergedContent
         }));
 
-        // Clear AI response after successful merge
+        setAiUpdatedFiles(prev => new Set(prev).add(selectedFile));
+
         setAiResponses(prev => {
           const newResponses = { ...prev };
           delete newResponses[selectedFile];
@@ -130,6 +134,7 @@ ${files[selectedFile].replace('Hello World', 'Enhanced Hello World')}
             files={files}
             selectedFile={selectedFile}
             onFileSelect={handleFileSelect}
+            aiUpdatedFiles={aiUpdatedFiles}
           />
         </ResizablePanel>
 

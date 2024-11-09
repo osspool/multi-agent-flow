@@ -1,22 +1,23 @@
 import React, { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
+import { getFileType, extractCodeFromMarkdown, extractAiMessage } from "@/utils/fileTypeUtils";
 
 interface StreamingResponseProps {
   content: string;
+  filename: string;
   onComplete?: (code: string) => void;
 }
 
 const StreamingResponse: React.FC<StreamingResponseProps> = ({
   content = "",
+  filename,
   onComplete,
 }) => {
   const [displayedContent, setDisplayedContent] = useState("");
   const [isComplete, setIsComplete] = useState(false);
 
   useEffect(() => {
-    if (!content) {
-      return;
-    }
+    if (!content) return;
 
     let index = 0;
     const interval = setInterval(() => {
@@ -27,26 +28,37 @@ const StreamingResponse: React.FC<StreamingResponseProps> = ({
         setIsComplete(true);
         clearInterval(interval);
         
-        // Extract code block and send it to parent
-        const codeMatch = content.match(/```(?:\w+)?\n([\s\S]*?)```/);
-        if (codeMatch && onComplete) {
-          const extractedCode = codeMatch[1].trim();
+        if (onComplete) {
+          const fileType = getFileType(filename);
+          const extractedCode = extractCodeFromMarkdown(content, fileType);
           onComplete(extractedCode);
         }
       }
     }, 20);
 
     return () => clearInterval(interval);
-  }, [content, onComplete]);
+  }, [content, filename, onComplete]);
+
+  const aiMessage = extractAiMessage(displayedContent);
+  const codeContent = extractCodeFromMarkdown(displayedContent, getFileType(filename));
 
   return (
-    <div
-      className={cn(
-        "font-mono text-sm p-4 bg-background/50 rounded-lg border transition-opacity duration-200",
-        !isComplete && "animate-pulse"
+    <div className="space-y-4">
+      {aiMessage && (
+        <div className="prose dark:prose-invert max-w-none">
+          {aiMessage}
+        </div>
       )}
-    >
-      <pre className="whitespace-pre-wrap">{displayedContent || " "}</pre>
+      {codeContent && (
+        <div
+          className={cn(
+            "font-mono text-sm p-4 bg-background/50 rounded-lg border transition-opacity duration-200",
+            !isComplete && "animate-pulse"
+          )}
+        >
+          <pre className="whitespace-pre-wrap">{codeContent || " "}</pre>
+        </div>
+      )}
     </div>
   );
 };

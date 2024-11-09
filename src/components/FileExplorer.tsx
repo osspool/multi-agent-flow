@@ -1,17 +1,19 @@
 import React from "react";
-import { FileCode } from "lucide-react";
+import { FileCode, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface FileExplorerProps {
   files: Record<string, string>;
   selectedFile: string | null;
   onFileSelect: (filename: string) => void;
+  aiUpdatedFiles: Set<string>;
 }
 
 const FileExplorer: React.FC<FileExplorerProps> = ({
   files,
   selectedFile,
   onFileSelect,
+  aiUpdatedFiles,
 }) => {
   return (
     <div className="h-full border-r p-4 space-y-4">
@@ -28,7 +30,10 @@ const FileExplorer: React.FC<FileExplorerProps> = ({
           onClick={() => onFileSelect(filename)}
         >
           <FileCode className="w-4 h-4" />
-          <span className="text-sm font-mono">{filename}</span>
+          <span className="text-sm font-mono flex-1">{filename}</span>
+          {aiUpdatedFiles.has(filename) && (
+            <Sparkles className="w-4 h-4 text-purple-500" />
+          )}
         </div>
       ))}
     </div>
