@@ -1,5 +1,5 @@
-import React from "react";
-import { Check, X, GitCommit } from "lucide-react";
+import React, { useState } from "react";
+import { Check, X, GitCommit, Eye, EyeOff } from "lucide-react";
 import { Button } from "./ui/button";
 import CodePreview from "./CodePreview";
 
@@ -24,12 +24,27 @@ const AiSuggestionPanel: React.FC<AiSuggestionPanelProps> = ({
   onSkip,
   onCommit,
 }) => {
+  const [showRaw, setShowRaw] = useState(false);
+
   return (
     <div className="h-full flex flex-col p-4">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-lg font-semibold">AI Suggestions</h2>
         {selectedFile && aiResponses[selectedFile] && (
           <div className="flex items-center gap-2">
+            <Button 
+              onClick={() => setShowRaw(!showRaw)} 
+              variant="ghost" 
+              size="sm"
+              className="text-muted-foreground hover:text-foreground"
+            >
+              {showRaw ? (
+                <EyeOff className="h-4 w-4 mr-1" />
+              ) : (
+                <Eye className="h-4 w-4 mr-1" />
+              )}
+              {showRaw ? "Hide Raw" : "Show Raw"}
+            </Button>
             <Button 
               onClick={onSkip} 
               variant="ghost" 
@@ -66,6 +81,7 @@ const AiSuggestionPanel: React.FC<AiSuggestionPanelProps> = ({
             content={aiResponses[selectedFile]}
             originalContent={files[selectedFile]}
             onContentChange={onAiResponseChange}
+            readOnly={!showRaw}
           />
         ) : (
           <div className="h-full flex items-center justify-center text-muted-foreground">
