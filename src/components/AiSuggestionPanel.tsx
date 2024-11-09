@@ -67,6 +67,7 @@ const AiSuggestionPanel: React.FC<AiSuggestionPanelProps> = ({
         {isStreaming ? (
           <StreamingResponse
             content={aiResponses[selectedFile!]}
+            filename={selectedFile!}
             onComplete={onStreamComplete}
           />
         ) : selectedFile && aiResponses[selectedFile] ? (

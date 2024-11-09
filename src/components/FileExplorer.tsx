@@ -13,7 +13,7 @@ const FileExplorer: React.FC<FileExplorerProps> = ({
   files,
   selectedFile,
   onFileSelect,
-  aiUpdatedFiles,
+  aiUpdatedFiles = new Set(), // Provide default value
 }) => {
   return (
     <div className="h-full border-r p-4 space-y-4">
@@ -31,7 +31,7 @@ const FileExplorer: React.FC<FileExplorerProps> = ({
         >
           <FileCode className="w-4 h-4" />
           <span className="text-sm font-mono flex-1">{filename}</span>
-          {aiUpdatedFiles.has(filename) && (
+          {aiUpdatedFiles?.has(filename) && (
             <Sparkles className="w-4 h-4 text-purple-500" />
           )}
         </div>
