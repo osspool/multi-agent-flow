@@ -5,12 +5,10 @@ import { MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { mergeCode } from "@/utils/mergeUtils";
-import { getFileType } from "@/utils/fileTypeUtils";
 import FileExplorer from "@/components/FileExplorer";
 import EditorPanel from "@/components/EditorPanel";
 import AiSuggestionPanel from "@/components/AiSuggestionPanel";
 import ChatInterface from "@/components/ChatInterface";
-import StreamingResponse from "@/components/StreamingResponse";
 
 const Index = () => {
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
@@ -52,14 +50,10 @@ settings:
   const handleAiUpdate = () => {
     if (selectedFile) {
       setIsStreaming(true);
-      const fileExt = selectedFile.split('.').pop();
-      // Create a properly formatted mock response with message and code block
-      const mockResponse = `I've enhanced the code with better practices:
-
-\`\`\`${fileExt}
-${files[selectedFile].replace('Hello World', 'Enhanced Hello World with Better Practices')}
-\`\`\``;
-      setAiResponses(prev => ({ ...prev, [selectedFile]: mockResponse }));
+      // Simplified mock response with just the enhanced code
+      const enhancedCode = files[selectedFile].replace('Hello World', 'Enhanced Hello World with Better Practices');
+      setAiResponses(prev => ({ ...prev, [selectedFile]: enhancedCode }));
+      setIsStreaming(false);
     }
   };
 

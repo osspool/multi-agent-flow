@@ -2,8 +2,6 @@ import React from "react";
 import { Check, X, GitCommit } from "lucide-react";
 import { Button } from "./ui/button";
 import CodePreview from "./CodePreview";
-import StreamingResponse from "./StreamingResponse";
-import { toast } from "sonner";
 
 interface AiSuggestionPanelProps {
   selectedFile: string | null;
@@ -21,9 +19,7 @@ const AiSuggestionPanel: React.FC<AiSuggestionPanelProps> = ({
   selectedFile,
   files,
   aiResponses,
-  isStreaming,
   onAiResponseChange,
-  onStreamComplete,
   onMerge,
   onSkip,
   onCommit,
@@ -64,15 +60,9 @@ const AiSuggestionPanel: React.FC<AiSuggestionPanelProps> = ({
         )}
       </div>
       <div className="flex-grow overflow-hidden">
-        {isStreaming ? (
-          <StreamingResponse
-            content={aiResponses[selectedFile!]}
-            filename={selectedFile!}
-            onComplete={onStreamComplete}
-          />
-        ) : selectedFile && aiResponses[selectedFile] ? (
+        {selectedFile && aiResponses[selectedFile] ? (
           <CodePreview
-            filename="AI Response"
+            filename={selectedFile}
             content={aiResponses[selectedFile]}
             originalContent={files[selectedFile]}
             onContentChange={onAiResponseChange}
